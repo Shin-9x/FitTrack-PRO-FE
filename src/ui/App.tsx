@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LoginPage from './pages/login/LoginPage.tsx';
 import RegisterPage from './pages/register/RegisterPage.tsx';
-import HomePage from './pages/homepage/Homepage.tsx';
+import HomePage from './pages/homepage/HomePage.tsx';
 
 const App: React.FC = () => {
   return (

@@ -1,3 +1,4 @@
+/* eslint-disable no-debugger */
 import { TokenExpiredException } from '../exception/TokenExpiredException';
 import { getAccessToken, saveAccessToken, getRefreshToken, isAccessTokenExpired, isRefreshTokenExpired, clearTokens } from './keyHelper'
 
@@ -80,13 +81,21 @@ export const apiRequest = async <T>(
             body: body ? JSON.stringify(body) : undefined,
         });
 
-        const data = await response.json();
         const status = response.status;
+        const contentType = response.headers.get("Content-Type");
+
+        let data;
+        if (contentType && contentType.includes("application/json")) {
+            data = await response.json();
+        } else {
+            data = await response.text();
+        }
 
         if (response.ok) {
             return { data, status };
         } else {
-            return { status, errorCode: data.errorCode, message: data.message };
+            const errorMessage = typeof data === 'string' ? data : data.message;
+            return { status, errorCode: data.errorCode, message: errorMessage };
         }
     } catch (error) {
         if (error instanceof TokenExpiredException) {
@@ -94,6 +103,6 @@ export const apiRequest = async <T>(
             throw error;
         }
         console.error(error);
-        return { status: 500, message: 'Errore di connessione. Controlla la tua connessione e riprova.' };
+        return { status: 503, message: 'Errore di connessione. Controlla la tua connessione e riprova.' };
     }
 };
