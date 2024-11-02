@@ -1,8 +1,18 @@
-/* eslint-disable no-debugger */
 import { TokenExpiredException } from '../exception/TokenExpiredException';
-import { getAccessToken, saveAccessToken, getRefreshToken, isAccessTokenExpired, isRefreshTokenExpired, clearTokens } from './keyHelper'
+import { 
+    getAccessToken, 
+    saveAccessToken, 
+    getRefreshToken, 
+    isAccessTokenExpired, 
+    isRefreshTokenExpired, 
+    clearTokens 
+} from './keyHelper'
 
-const BASE_URL = 'http://localhost:8080';
+import { 
+    BASE_BE_ENDPOINT, 
+    NO_AUTH_APIS, 
+    REFRESH_ENDPOINT 
+} from '../constants/beEndpoints';
 
 export interface ApiResponse<T> {
     data?: T;
@@ -11,11 +21,7 @@ export interface ApiResponse<T> {
     message?: string;
 }
 
-const NO_AUTH_APIS = [
-    '/auth/register', '/auth/login'
-];
-
-const REFRESH_API = '/auth/refresh';
+const JSON_CONTENT_TYPE = 'application/json';
 
 const refreshAccessToken = async (): Promise<string | null> => {
     const refreshToken = await getRefreshToken();
@@ -23,10 +29,10 @@ const refreshAccessToken = async (): Promise<string | null> => {
         return null;
     }
 
-    const response = await fetch(`${BASE_URL}${REFRESH_API}`, {
+    const response = await fetch(`${BASE_BE_ENDPOINT}${REFRESH_ENDPOINT}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': JSON_CONTENT_TYPE,
             'Authorization': `Bearer ${refreshToken}`,
         },
     });
@@ -35,7 +41,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
         const data = await response.json();
         const { token, expiresAt } = data;
         
-        await saveAccessToken(token, new Date(expiresAt).getTime()); // Salva la scadenza come timestamp
+        await saveAccessToken(token, new Date(expiresAt).getTime()); 
         return token; 
     }
 
@@ -53,7 +59,7 @@ export const apiRequest = async <T>(
 
         if (NO_AUTH_APIS.includes(endpoint)) {
             headers = {
-                'Content-Type': 'application/json'
+                'Content-Type': JSON_CONTENT_TYPE
             };
         } else {
             if (isAccessTokenExpired()) {
@@ -70,12 +76,12 @@ export const apiRequest = async <T>(
             }
 
             headers = {
-                'Content-Type': 'application/json',
+                'Content-Type': JSON_CONTENT_TYPE,
                 'Authorization': accessToken ? `Bearer ${accessToken}` : '',
             };
         }
 
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
+        const response = await fetch(`${BASE_BE_ENDPOINT}${endpoint}`, {
             method,
             headers,
             body: body ? JSON.stringify(body) : undefined,

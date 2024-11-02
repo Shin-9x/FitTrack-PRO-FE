@@ -5,6 +5,8 @@ import { apiRequest } from '../../util/apiHelper';
 import { saveAccessToken, saveRefreshToken } from '../../util/keyHelper';
 import { useToast } from '../../context/ToastContext';
 import { ToastType } from '../../components/toast/ToastType';
+import { LOGIN_ENDPOINT } from '../../constants/beEndpoints';
+import { HOME_PAGE_ENDPOINT, REGISTER_PAGE_ENDPOINT } from '../../constants/feEndpoints';
 
 import './LoginPage.css';
 
@@ -21,7 +23,7 @@ const LoginPage: React.FC = () => {
         return;
     }
 
-    const { data, status, message } = await apiRequest<{ accessToken: { token: string; expiresAt: string }, refreshToken: { token: string; expiresAt: string } }>('/auth/login', 'POST', { username, password });
+    const { data, status, message } = await apiRequest<{ accessToken: { token: string; expiresAt: string }, refreshToken: { token: string; expiresAt: string } }>(LOGIN_ENDPOINT, 'POST', { username, password });
 
     if (status === 200) {
         showToast('Successo!', ToastType.SUCCESS, 3000);
@@ -31,7 +33,7 @@ const LoginPage: React.FC = () => {
             await saveRefreshToken(data.refreshToken.token, new Date(data.refreshToken.expiresAt).getTime());
         }
         
-        setTimeout(() => { navigate('/homepage'); }, 3000);
+        setTimeout(() => { navigate(HOME_PAGE_ENDPOINT); }, 3000);
     } else {
         switch (status) {
             case 400:
@@ -54,7 +56,7 @@ const LoginPage: React.FC = () => {
   };
 
   const goToRegisterPage = () => {
-    navigate('/registration');
+    navigate(REGISTER_PAGE_ENDPOINT);
   };
 
   return (

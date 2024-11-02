@@ -9,6 +9,11 @@ import {
     isAccessTokenExpired, 
     isRefreshTokenExpired 
 } from './util/keyHelper';
+import { 
+  LOGIN_PAGE_ENDPOINT,
+  REGISTER_PAGE_ENDPOINT,
+  HOME_PAGE_ENDPOINT
+} from './constants/feEndpoints';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,17 +23,17 @@ const App: React.FC = () => {
     const checkTokens = async () => {
       const accessToken = await getAccessToken();
       const refreshToken = await getRefreshToken();
-      const accessExpired = isAccessTokenExpired();
-      const refreshExpired = isRefreshTokenExpired();
+      const accessExpired = await isAccessTokenExpired();
+      const refreshExpired = await isRefreshTokenExpired();
 
       if (!accessToken || !refreshToken) {
-        setRedirectPath('/login');
+        setRedirectPath(LOGIN_PAGE_ENDPOINT);
       } else if (accessExpired) {
-        setRedirectPath('/login');
+        setRedirectPath(LOGIN_PAGE_ENDPOINT);
       } else if (refreshExpired) {
-        setRedirectPath('/login');
+        setRedirectPath(LOGIN_PAGE_ENDPOINT);
       } else {
-        setRedirectPath('/homepage');
+        setRedirectPath(HOME_PAGE_ENDPOINT);
       }
 
       setIsLoading(false);
@@ -44,10 +49,10 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to={redirectPath || '/login'} />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/registration" element={<RegisterPage />} />
-        <Route path="/homepage" element={<HomePage />} />
+        <Route path="/" element={<Navigate to={redirectPath || LOGIN_PAGE_ENDPOINT} />} />
+        <Route path={LOGIN_PAGE_ENDPOINT} element={<LoginPage />} />
+        <Route path={REGISTER_PAGE_ENDPOINT} element={<RegisterPage />} />
+        <Route path={HOME_PAGE_ENDPOINT} element={<HomePage />} />
       </Routes>
     </Router>
   );

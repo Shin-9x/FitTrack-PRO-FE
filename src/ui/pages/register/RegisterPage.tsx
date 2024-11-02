@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../../util/apiHelper';
 import { useToast } from '../../context/ToastContext';
 import { ToastType } from '../../components/toast/ToastType';
+import { REGISTER_ENDPOINT } from '../../constants/beEndpoints';
+import { LOGIN_PAGE_ENDPOINT } from '../../constants/feEndpoints';
 
 import './RegisterPage.css';
 
@@ -30,7 +32,7 @@ const RegisterPage: React.FC = () => {
         return;
     }
 
-    const { status, errorCode, message } = await apiRequest('/auth/register', 'POST', { username, password, email });
+    const { status, errorCode, message } = await apiRequest(REGISTER_ENDPOINT, 'POST', { username, password, email });
 
     if (status === 200) {
         showToast('Registrazione avvenuta con successo!', ToastType.SUCCESS, 3000);
@@ -55,7 +57,7 @@ const RegisterPage: React.FC = () => {
   };
 
   const goToLoginPage = () => {
-    navigate('/login');
+    navigate(LOGIN_PAGE_ENDPOINT);
   };
 
   return (
