@@ -2,52 +2,52 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../../util/apiHelper';
-import { saveAccessToken, saveRefreshToken } from '../../util/keyHelper' // Importa i metodi di salvataggio
+import { saveAccessToken, saveRefreshToken } from '../../util/keyHelper';
+import { useToast } from '../../context/ToastContext';
+import { ToastType } from '../../components/toast/ToastType';
+
 import './LoginPage.css';
 
 const LoginPage: React.FC = () => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const [errorMessage, setErrorMessage] = useState('');
-
   const handleLogin = async () => {
-    setErrorMessage('');
-
     if (!username || !password) {
-        setErrorMessage('Tutti i campi sono obbligatori.');
+        showToast('Tutti i campi sono obbligatori.', ToastType.ERROR, 3000);
         return;
     }
 
     const { data, status, message } = await apiRequest<{ accessToken: { token: string; expiresAt: string }, refreshToken: { token: string; expiresAt: string } }>('/auth/login', 'POST', { username, password });
 
     if (status === 200) {
-        console.log('Connessione riuscita!', data);
-        // Salva i token ricevuti
+        showToast('Successo!', ToastType.SUCCESS, 3000);
+
         if(data) {
             await saveAccessToken(data.accessToken.token, new Date(data.accessToken.expiresAt).getTime());
             await saveRefreshToken(data.refreshToken.token, new Date(data.refreshToken.expiresAt).getTime());
         }
         
-        navigate('/homepage');
+        setTimeout(() => { navigate('/homepage'); }, 3000);
     } else {
         switch (status) {
             case 400:
-                setErrorMessage('Compilare correttamente tutti i campi.');
+                showToast('Compilare correttamente tutti i campi.', ToastType.ERROR);
                 break;
             case 404:
-                setErrorMessage('L\'username inserito non è presente nei nostri sistemi.');
+                showToast('L\'username inserito non è presente nei nostri sistemi.', ToastType.ERROR);
                 break;
             case 401:
-                setErrorMessage('La password inserita non è valida');
+                showToast('La password inserita non è valida', ToastType.ERROR);
                 break;
             case 500:
-                setErrorMessage('Errore durante il login. Riprova');
+                showToast('Errore durante il login. Riprova', ToastType.ERROR);
                 break;
             default:
-                setErrorMessage(message || 'Errore sconosciuto.');
+                showToast(message || 'Errore sconosciuto.', ToastType.ERROR);
                 break;
         }
     }
@@ -80,8 +80,6 @@ const LoginPage: React.FC = () => {
           className="input"
         />
       </div>
-
-      {errorMessage && <p className="error">{errorMessage}</p>}
 
       <button onClick={handleLogin} className="button">Conferma</button>
       Non sei registrato? Vai alla pagina di <p className='link' onClick={goToRegisterPage}>Registrazione</p>.

@@ -1,47 +1,55 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../../util/apiHelper';
+import { useToast } from '../../context/ToastContext';
+import { ToastType } from '../../components/toast/ToastType';
+
 import './RegisterPage.css';
 
 const RegisterPage: React.FC = () => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
 
-  const [errorMessage, setErrorMessage] = useState('');
-
   const handleRegister = async () => {
-    setErrorMessage('');
-
     if (!username || !password || !email) {
-        setErrorMessage('Tutti i campi sono obbligatori.');
+        showToast('Tutti i campi sono obbligatori.', ToastType.ERROR, 3000);
         return;
     }
 
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('La mail non è in un formato valido.', ToastType.ERROR, 3000);
+      return;
+    }
+
     if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-        setErrorMessage('La password deve avere almeno 8 caratteri alfanumerici.');
+        showToast('La password deve avere almeno 8 caratteri alfanumerici.', ToastType.ERROR, 3000);
         return;
     }
 
     const { status, errorCode, message } = await apiRequest('/auth/register', 'POST', { username, password, email });
 
     if (status === 200) {
-        navigate('/login');
+        showToast('Registrazione avvenuta con successo!', ToastType.SUCCESS, 3000);
+        setTimeout(() => {
+          goToLoginPage();
+        }, 3000);
     } else {
         if (status === 400) {
-            setErrorMessage('Compilare correttamente tutti i campi.');
+            showToast('Compilare correttamente tutti i campi.', ToastType.ERROR);
         } else if (status === 409) {
             if (errorCode === 'ERR001') {
-                setErrorMessage('Questo username è già in uso.');
+                showToast('Questo username è già in uso.', ToastType.ERROR);
             } else if (errorCode === 'ERR002') {
-                setErrorMessage('Questa email è già in uso.');
+                showToast('Questa email è già in uso.', ToastType.ERROR);
             } else {
-                setErrorMessage(message || 'Errore durante la registrazione. Riprova.');
+                showToast(message || 'Errore durante la registrazione. Riprova.', ToastType.ERROR);
             }
         } else {
-            setErrorMessage(message || 'Errore durante la registrazione. Riprova.');
+            showToast(message || 'Errore durante la registrazione. Riprova.', ToastType.ERROR);
         }
     }
   };
@@ -83,8 +91,6 @@ const RegisterPage: React.FC = () => {
           className="input"
         />
       </div>
-
-      {errorMessage && <p className="error">{errorMessage}</p>}
 
       <button onClick={handleRegister} className="button">Conferma</button>
       Già registrato? Vai alla pagina di <p className='link' onClick={goToLoginPage}>Login</p>.
