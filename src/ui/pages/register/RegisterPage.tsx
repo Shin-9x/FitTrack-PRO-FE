@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiRequest } from '../../util/apiHelper';
 import './RegisterPage.css';
 
 const RegisterPage: React.FC = () => {
@@ -15,39 +16,33 @@ const RegisterPage: React.FC = () => {
     setErrorMessage('');
 
     if (!username || !password || !email) {
-      setErrorMessage('Tutti i campi sono obbligatori.');
-      return;
+        setErrorMessage('Tutti i campi sono obbligatori.');
+        return;
     }
 
     if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-      setErrorMessage('La password deve avere almeno 8 caratteri alfanumerici.');
-      return;
+        setErrorMessage('La password deve avere almeno 8 caratteri alfanumerici.');
+        return;
     }
 
-    try {
-      const response = await fetch('http://localhost:8080/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password, email }),
-      });
+    const { status, errorCode, message } = await apiRequest('/auth/register', 'POST', { username, password, email });
 
-      if (response.ok) {
+    if (status === 200) {
         navigate('/login');
-      } else {
-        const errorData = await response.json();
-        if (errorData.message === 'Username already taken') {
-          setErrorMessage('Questo username è già in uso.');
-        } else if (errorData.message === 'Email already in use') {
-          setErrorMessage('Questa email è già in uso.');
+    } else {
+        if (status === 400) {
+            setErrorMessage('Compilare correttamente tutti i campi.');
+        } else if (status === 409) {
+            if (errorCode === 'ERR001') {
+                setErrorMessage('Questo username è già in uso.');
+            } else if (errorCode === 'ERR002') {
+                setErrorMessage('Questa email è già in uso.');
+            } else {
+                setErrorMessage(message || 'Errore durante la registrazione. Riprova.');
+            }
         } else {
-          setErrorMessage('Errore durante la registrazione. Riprova.');
+            setErrorMessage(message || 'Errore durante la registrazione. Riprova.');
         }
-      }
-    } catch (error) {
-      console.log(error);
-      setErrorMessage('Errore di connessione. Controlla la tua connessione e riprova.');
     }
   };
 

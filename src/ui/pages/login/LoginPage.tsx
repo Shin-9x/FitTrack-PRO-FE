@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiRequest } from '../../util/apiHelper';
+import { saveAccessToken, saveRefreshToken } from '../../util/keyHelper' // Importa i metodi di salvataggio
 import './LoginPage.css';
 
 const LoginPage: React.FC = () => {
@@ -13,37 +16,42 @@ const LoginPage: React.FC = () => {
   const handleLogin = async () => {
     setErrorMessage('');
 
-    if(!username || !password) {
+    if (!username || !password) {
         setErrorMessage('Tutti i campi sono obbligatori.');
         return;
     }
 
-    try {
-        const response = await fetch('http://localhost:8080/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password}),
-        });
+    const { data, status, message } = await apiRequest<{ accessToken: { token: string; expiresAt: string }, refreshToken: { token: string; expiresAt: string } }>('/auth/login', 'POST', { username, password });
 
-        if(response.ok) {
-            console.log('Connessione riuscita!');
-        } else {
-            const errorData = await response.json();
-            if(errorData.message === 'Username not recognized') {
-                setErrorMessage('L\'username inserito non è presente nei nostri sistemi.');
-            } else if(errorData.message === 'Password not recognized') {
-                setErrorMessage('La password inserita non è valida');
-            } else {
-                setErrorMessage('Errore durante il login. Riprova');
-            }
+    if (status === 200) {
+        console.log('Connessione riuscita!', data);
+        // Salva i token ricevuti
+        if(data) {
+            await saveAccessToken(data.accessToken.token, new Date(data.accessToken.expiresAt).getTime());
+            await saveRefreshToken(data.refreshToken.token, new Date(data.refreshToken.expiresAt).getTime());
         }
-    } catch(error) {
-        console.log(error);
-        setErrorMessage('Errore di connessione. Controlla la tua connessione e riprova.');
+        
+        navigate('/homepage');
+    } else {
+        switch (status) {
+            case 400:
+                setErrorMessage('Compilare correttamente tutti i campi.');
+                break;
+            case 404:
+                setErrorMessage('L\'username inserito non è presente nei nostri sistemi.');
+                break;
+            case 401:
+                setErrorMessage('La password inserita non è valida');
+                break;
+            case 500:
+                setErrorMessage('Errore durante il login. Riprova');
+                break;
+            default:
+                setErrorMessage(message || 'Errore sconosciuto.');
+                break;
+        }
     }
-  }
+  };
 
   const goToRegisterPage = () => {
     navigate('/registration');
